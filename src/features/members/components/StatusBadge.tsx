@@ -9,7 +9,7 @@ const STYLES: Record<MemberStatus, string> = {
 
 const LABELS: Record<MemberStatus, string> = {
   active: "Active",
-  expiring: "Expiring",
+  expiring: "Expiring Soon",
   expired: "Expired",
   unknown: "No dates",
 };

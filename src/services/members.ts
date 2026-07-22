@@ -15,9 +15,50 @@ export interface Member {
   weight: number | null;
   emergencyContactName: string | null;
   emergencyContactPhone: string | null;
+  planId: string | null;
+  planName: string | null;
   membershipStartDate: string | null;
   membershipEndDate: string | null;
   createdAt: string;
+}
+
+interface MemberRow {
+  id: string;
+  full_name: string;
+  phone: string;
+  gender: string | null;
+  date_of_birth: string | null;
+  height: number | null;
+  weight: number | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+  plan_id: string | null;
+  plan: { plan_name: string } | null;
+  membership_start_date: string | null;
+  membership_end_date: string | null;
+  created_at: string;
+}
+
+const MEMBER_SELECT =
+  "id, full_name, phone, gender, date_of_birth, height, weight, emergency_contact_name, emergency_contact_phone, plan_id, plan:membership_plans(plan_name), membership_start_date, membership_end_date, created_at";
+
+function mapMemberRow(row: MemberRow): Member {
+  return {
+    id: row.id,
+    fullName: row.full_name,
+    phone: row.phone,
+    gender: row.gender,
+    dateOfBirth: row.date_of_birth,
+    height: row.height,
+    weight: row.weight,
+    emergencyContactName: row.emergency_contact_name,
+    emergencyContactPhone: row.emergency_contact_phone,
+    planId: row.plan_id,
+    planName: row.plan?.plan_name ?? null,
+    membershipStartDate: row.membership_start_date,
+    membershipEndDate: row.membership_end_date,
+    createdAt: row.created_at,
+  };
 }
 
 function sanitizeSearchTerm(search: string): string {
@@ -39,9 +80,7 @@ export async function getMembers({
 
     let query = supabase
       .from("members")
-      .select(
-        "id, full_name, phone, gender, date_of_birth, height, weight, emergency_contact_name, emergency_contact_phone, membership_start_date, membership_end_date, created_at",
-      )
+      .select(MEMBER_SELECT)
       .eq("gym_id", gymId)
       .order("full_name", { ascending: true });
 
@@ -56,23 +95,31 @@ export async function getMembers({
       return { data: null, error: error.message };
     }
 
+    return { data: (data as unknown as MemberRow[]).map(mapMemberRow), error: null };
+  } catch {
     return {
-      data: data.map((row) => ({
-        id: row.id,
-        fullName: row.full_name,
-        phone: row.phone,
-        gender: row.gender,
-        dateOfBirth: row.date_of_birth,
-        height: row.height,
-        weight: row.weight,
-        emergencyContactName: row.emergency_contact_name,
-        emergencyContactPhone: row.emergency_contact_phone,
-        membershipStartDate: row.membership_start_date,
-        membershipEndDate: row.membership_end_date,
-        createdAt: row.created_at,
-      })),
-      error: null,
+      data: null,
+      error: "Unable to reach the server. Please check your connection and try again.",
     };
+  }
+}
+
+export async function getMemberById(id: string, gymId: string): Promise<ServiceResult<Member>> {
+  try {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from("members")
+      .select(MEMBER_SELECT)
+      .eq("id", id)
+      .eq("gym_id", gymId)
+      .single();
+
+    if (error) {
+      return { data: null, error: error.message };
+    }
+
+    return { data: mapMemberRow(data as unknown as MemberRow), error: null };
   } catch {
     return {
       data: null,
@@ -91,8 +138,9 @@ interface CreateMemberParams {
   weight?: number;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
+  planId?: string;
   membershipStartDate: string;
-  membershipEndDate: string;
+  membershipEndDate?: string;
 }
 
 export async function createMember(
@@ -113,8 +161,9 @@ export async function createMember(
         weight: params.weight ?? null,
         emergency_contact_name: params.emergencyContactName ?? null,
         emergency_contact_phone: params.emergencyContactPhone ?? null,
+        plan_id: params.planId ?? null,
         membership_start_date: params.membershipStartDate,
-        membership_end_date: params.membershipEndDate,
+        membership_end_date: params.membershipEndDate ?? null,
       })
       .select("id")
       .single();
@@ -124,51 +173,6 @@ export async function createMember(
     }
 
     return { data: { id: data.id }, error: null };
-  } catch {
-    return {
-      data: null,
-      error: "Unable to reach the server. Please check your connection and try again.",
-    };
-  }
-}
-
-export async function getMemberById(
-  id: string,
-  gymId: string,
-): Promise<ServiceResult<Member>> {
-  try {
-    const supabase = await createClient();
-
-    const { data, error } = await supabase
-      .from("members")
-      .select(
-        "id, full_name, phone, gender, date_of_birth, height, weight, emergency_contact_name, emergency_contact_phone, membership_start_date, membership_end_date, created_at",
-      )
-      .eq("id", id)
-      .eq("gym_id", gymId)
-      .single();
-
-    if (error) {
-      return { data: null, error: error.message };
-    }
-
-    return {
-      data: {
-        id: data.id,
-        fullName: data.full_name,
-        phone: data.phone,
-        gender: data.gender,
-        dateOfBirth: data.date_of_birth,
-        height: data.height,
-        weight: data.weight,
-        emergencyContactName: data.emergency_contact_name,
-        emergencyContactPhone: data.emergency_contact_phone,
-        membershipStartDate: data.membership_start_date,
-        membershipEndDate: data.membership_end_date,
-        createdAt: data.created_at,
-      },
-      error: null,
-    };
   } catch {
     return {
       data: null,
@@ -188,28 +192,37 @@ interface UpdateMemberParams {
   weight?: number;
   emergencyContactName?: string;
   emergencyContactPhone?: string;
+  planId?: string;
   membershipStartDate: string;
-  membershipEndDate: string;
+  membershipEndDate?: string;
 }
 
 export async function updateMember(params: UpdateMemberParams): Promise<ServiceResult<null>> {
   try {
     const supabase = await createClient();
 
+    const updatePayload: Record<string, unknown> = {
+      full_name: params.fullName,
+      phone: params.phone,
+      gender: params.gender ?? null,
+      date_of_birth: params.dateOfBirth ?? null,
+      height: params.height ?? null,
+      weight: params.weight ?? null,
+      emergency_contact_name: params.emergencyContactName ?? null,
+      emergency_contact_phone: params.emergencyContactPhone ?? null,
+      plan_id: params.planId ?? null,
+      membership_start_date: params.membershipStartDate,
+    };
+
+    // Only touch membership_end_date when the caller actually computed one
+    // (i.e. a plan was selected) — otherwise leave the existing value alone.
+    if (params.membershipEndDate !== undefined) {
+      updatePayload.membership_end_date = params.membershipEndDate;
+    }
+
     const { error } = await supabase
       .from("members")
-      .update({
-        full_name: params.fullName,
-        phone: params.phone,
-        gender: params.gender ?? null,
-        date_of_birth: params.dateOfBirth ?? null,
-        height: params.height ?? null,
-        weight: params.weight ?? null,
-        emergency_contact_name: params.emergencyContactName ?? null,
-        emergency_contact_phone: params.emergencyContactPhone ?? null,
-        membership_start_date: params.membershipStartDate,
-        membership_end_date: params.membershipEndDate,
-      })
+      .update(updatePayload)
       .eq("id", params.id)
       .eq("gym_id", params.gymId);
 

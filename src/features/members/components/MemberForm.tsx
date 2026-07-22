@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import type { MemberInput } from "@/validators/member";
 import type { Member } from "@/services/members";
+import type { MembershipPlan } from "@/services/membershipPlans";
 
 export interface MemberFormState {
   success: boolean;
@@ -24,6 +25,7 @@ interface MemberFormProps {
   action: (prevState: MemberFormState, formData: FormData) => Promise<MemberFormState>;
   defaultValues?: Partial<Member>;
   memberId?: string;
+  plans: MembershipPlan[];
   submitLabel?: string;
   title?: string;
 }
@@ -32,6 +34,7 @@ export function MemberForm({
   action,
   defaultValues,
   memberId,
+  plans,
   submitLabel = "Save member",
   title = "Add member",
 }: MemberFormProps) {
@@ -113,6 +116,24 @@ export function MemberForm({
 
         <p className="mt-2 text-xs font-medium text-gray-400">MEMBERSHIP</p>
         <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-1">
+            <label htmlFor="planId" className="text-xs text-gray-600">
+              Plan
+            </label>
+            <select
+              id="planId"
+              name="planId"
+              defaultValue={defaultValues?.planId ?? ""}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10"
+            >
+              <option value="">No plan</option>
+              {plans.map((plan) => (
+                <option key={plan.id} value={plan.id}>
+                  {plan.planName} ({plan.durationDays} days)
+                </option>
+              ))}
+            </select>
+          </div>
           <Input
             label="Start date"
             name="membershipStartDate"
@@ -121,15 +142,13 @@ export function MemberForm({
             error={state.fieldErrors.membershipStartDate}
             required
           />
-          <Input
-            label="End date"
-            name="membershipEndDate"
-            type="date"
-            defaultValue={defaultValues?.membershipEndDate ?? undefined}
-            error={state.fieldErrors.membershipEndDate}
-            required
-          />
         </div>
+        {defaultValues?.membershipEndDate && (
+          <p className="text-xs text-gray-500">
+            Current expiry: {defaultValues.membershipEndDate}. Expiry only recalculates if you
+            change the plan or start date.
+          </p>
+        )}
 
         <p className="mt-2 text-xs font-medium text-gray-400">EMERGENCY CONTACT</p>
         <div className="grid grid-cols-2 gap-4">

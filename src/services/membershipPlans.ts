@@ -49,6 +49,41 @@ export async function getPlans(gymId: string): Promise<ServiceResult<MembershipP
   }
 }
 
+export async function getActivePlans(gymId: string): Promise<ServiceResult<MembershipPlan[]>> {
+  try {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from("membership_plans")
+      .select("id, plan_name, duration_days, price, description, is_active, created_at")
+      .eq("gym_id", gymId)
+      .eq("is_active", true)
+      .order("plan_name", { ascending: true });
+
+    if (error) {
+      return { data: null, error: error.message };
+    }
+
+    return {
+      data: data.map((row) => ({
+        id: row.id,
+        planName: row.plan_name,
+        durationDays: row.duration_days,
+        price: Number(row.price),
+        description: row.description,
+        isActive: row.is_active,
+        createdAt: row.created_at,
+      })),
+      error: null,
+    };
+  } catch {
+    return {
+      data: null,
+      error: "Unable to reach the server. Please check your connection and try again.",
+    };
+  }
+}
+
 export async function getPlanById(
   id: string,
   gymId: string,

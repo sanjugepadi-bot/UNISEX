@@ -93,6 +93,7 @@ export default async function AttendancePage({ searchParams }: AttendancePagePro
               <CheckInButton
                 memberId={member.id}
                 alreadyCheckedIn={checkedInMemberIds.has(member.id)}
+                status={getMemberStatus(member.membershipEndDate)}
               />
             </div>
           ))}

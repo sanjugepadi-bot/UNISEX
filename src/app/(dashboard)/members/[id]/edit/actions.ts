@@ -3,8 +3,15 @@
 import { revalidatePath } from "next/cache";
 import { memberSchema, type MemberInput } from "@/validators/member";
 import { getCurrentUserProfile } from "@/services/profiles";
-import { updateMember } from "@/services/members";
+import { getMemberById, updateMember } from "@/services/members";
+import { getPlanById } from "@/services/membershipPlans";
 import type { MemberFormState } from "@/features/members/components/MemberForm";
+
+function addDaysUtc(dateStr: string, days: number): string {
+  const d = new Date(`${dateStr}T00:00:00.000Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
 
 export async function updateMemberAction(
   _prevState: MemberFormState,
@@ -25,8 +32,8 @@ export async function updateMemberAction(
     weight: formData.get("weight"),
     emergencyContactName: formData.get("emergencyContactName"),
     emergencyContactPhone: formData.get("emergencyContactPhone"),
+    planId: formData.get("planId"),
     membershipStartDate: formData.get("membershipStartDate"),
-    membershipEndDate: formData.get("membershipEndDate"),
   };
 
   const parsed = memberSchema.safeParse(raw);
@@ -52,10 +59,31 @@ export async function updateMemberAction(
     };
   }
 
+  const { data: existing, error: existingError } = await getMemberById(memberId, profile.gymId);
+  if (existingError || !existing) {
+    return { success: false, fieldErrors: {}, formError: "Member not found." };
+  }
+
+  // Only recalculate expiry if the plan or start date actually changed —
+  // resubmitting the same plan (e.g. editing an unrelated field like phone)
+  // must never shift the expiry, even if that plan's duration changed since.
+  const planChanged = (parsed.data.planId ?? null) !== (existing.planId ?? null);
+  const startDateChanged = parsed.data.membershipStartDate !== existing.membershipStartDate;
+
+  let membershipEndDate: string | undefined;
+  if (parsed.data.planId && (planChanged || startDateChanged)) {
+    const { data: plan, error: planError } = await getPlanById(parsed.data.planId, profile.gymId);
+    if (planError || !plan) {
+      return { success: false, fieldErrors: {}, formError: "Selected plan could not be found." };
+    }
+    membershipEndDate = addDaysUtc(parsed.data.membershipStartDate, plan.durationDays);
+  }
+
   const { error } = await updateMember({
     id: memberId,
     gymId: profile.gymId,
     ...parsed.data,
+    membershipEndDate,
   });
 
   if (error) {

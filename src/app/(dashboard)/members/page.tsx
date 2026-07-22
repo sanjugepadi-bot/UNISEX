@@ -80,6 +80,8 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
             <tr>
               <th className="px-3 py-2 text-left font-medium">Name</th>
               <th className="px-3 py-2 text-left font-medium">Phone</th>
+              <th className="px-3 py-2 text-left font-medium">Plan</th>
+              <th className="px-3 py-2 text-left font-medium">Start date</th>
               <th className="px-3 py-2 text-left font-medium">Expires</th>
               <th className="px-3 py-2 text-left font-medium">Status</th>
               <th className="px-3 py-2 text-left font-medium"></th>
@@ -88,7 +90,7 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
           <tbody>
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-3 py-8 text-center text-gray-500">
+                <td colSpan={7} className="px-3 py-8 text-center text-gray-500">
                   No members found.
                 </td>
               </tr>
@@ -97,6 +99,8 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
               <tr key={member.id} className="border-t border-gray-200">
                 <td className="px-3 py-2">{member.fullName}</td>
                 <td className="px-3 py-2 text-gray-600">{member.phone}</td>
+                <td className="px-3 py-2 text-gray-600">{member.planName ?? "—"}</td>
+                <td className="px-3 py-2 text-gray-600">{member.membershipStartDate ?? "—"}</td>
                 <td className="px-3 py-2 text-gray-600">{member.membershipEndDate ?? "—"}</td>
                 <td className="px-3 py-2">
                   <StatusBadge status={getMemberStatus(member.membershipEndDate)} />

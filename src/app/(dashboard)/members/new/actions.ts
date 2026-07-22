@@ -4,7 +4,14 @@ import { revalidatePath } from "next/cache";
 import { memberSchema, type MemberInput } from "@/validators/member";
 import { getCurrentUserProfile } from "@/services/profiles";
 import { createMember } from "@/services/members";
+import { getPlanById } from "@/services/membershipPlans";
 import type { MemberFormState } from "@/features/members/components/MemberForm";
+
+function addDaysUtc(dateStr: string, days: number): string {
+  const d = new Date(`${dateStr}T00:00:00.000Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
 
 export async function createMemberAction(
   _prevState: MemberFormState,
@@ -19,8 +26,8 @@ export async function createMemberAction(
     weight: formData.get("weight"),
     emergencyContactName: formData.get("emergencyContactName"),
     emergencyContactPhone: formData.get("emergencyContactPhone"),
+    planId: formData.get("planId"),
     membershipStartDate: formData.get("membershipStartDate"),
-    membershipEndDate: formData.get("membershipEndDate"),
   };
 
   const parsed = memberSchema.safeParse(raw);
@@ -46,9 +53,19 @@ export async function createMemberAction(
     };
   }
 
+  let membershipEndDate: string | undefined;
+  if (parsed.data.planId) {
+    const { data: plan, error: planError } = await getPlanById(parsed.data.planId, profile.gymId);
+    if (planError || !plan) {
+      return { success: false, fieldErrors: {}, formError: "Selected plan could not be found." };
+    }
+    membershipEndDate = addDaysUtc(parsed.data.membershipStartDate, plan.durationDays);
+  }
+
   const { error } = await createMember({
     gymId: profile.gymId,
     ...parsed.data,
+    membershipEndDate,
   });
 
   if (error) {

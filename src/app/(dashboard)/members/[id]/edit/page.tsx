@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect, notFound } from "next/navigation";
 import { getCurrentUserProfile } from "@/services/profiles";
 import { getMemberById } from "@/services/members";
+import { getActivePlans } from "@/services/membershipPlans";
 import { MemberForm } from "@/features/members/components/MemberForm";
 import { updateMemberAction } from "./actions";
 
@@ -26,11 +27,14 @@ export default async function EditMemberPage({ params }: EditMemberPageProps) {
     notFound();
   }
 
+  const { data: plans } = await getActivePlans(profile.gymId);
+
   return (
     <MemberForm
       action={updateMemberAction}
       defaultValues={member}
       memberId={member.id}
+      plans={plans ?? []}
       submitLabel="Save changes"
       title="Edit member"
     />

@@ -11,8 +11,8 @@ export const memberSchema = z.object({
   weight: z.preprocess(emptyStringToUndefined, z.coerce.number().positive().optional()),
   emergencyContactName: z.preprocess(emptyStringToUndefined, z.string().trim().optional()),
   emergencyContactPhone: z.preprocess(emptyStringToUndefined, z.string().trim().optional()),
+  planId: z.preprocess(emptyStringToUndefined, z.string().uuid().optional()),
   membershipStartDate: z.string().min(1, "Start date is required"),
-  membershipEndDate: z.string().min(1, "End date is required"),
 });
 
 export type MemberInput = z.infer<typeof memberSchema>;
