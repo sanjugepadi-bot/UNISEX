@@ -20,6 +20,19 @@ interface AttendanceRow {
   member: { full_name: string; membership_end_date: string | null } | null;
 }
 
+const ATTENDANCE_SELECT =
+  "id, member_id, check_in_time, member:members(full_name, membership_end_date)";
+
+function mapAttendanceRow(row: AttendanceRow): AttendanceRecord {
+  return {
+    id: row.id,
+    memberId: row.member_id,
+    memberName: row.member?.full_name ?? "Unknown",
+    checkInTime: row.check_in_time,
+    membershipEndDate: row.member?.membership_end_date ?? null,
+  };
+}
+
 function startOfDayUtc(dateStr: string): string {
   return `${dateStr}T00:00:00.000Z`;
 }
@@ -38,7 +51,7 @@ export async function getAttendanceForDate(
 
     const { data, error } = await supabase
       .from("attendance")
-      .select("id, member_id, check_in_time, member:members(full_name, membership_end_date)")
+      .select(ATTENDANCE_SELECT)
       .gte("check_in_time", startOfDayUtc(date))
       .lt("check_in_time", startOfNextDayUtc(date))
       .order("check_in_time", { ascending: false });
@@ -47,16 +60,30 @@ export async function getAttendanceForDate(
       return { data: null, error: error.message };
     }
 
+    return { data: (data as unknown as AttendanceRow[]).map(mapAttendanceRow), error: null };
+  } catch {
     return {
-      data: (data as unknown as AttendanceRow[]).map((row) => ({
-        id: row.id,
-        memberId: row.member_id,
-        memberName: row.member?.full_name ?? "Unknown",
-        checkInTime: row.check_in_time,
-        membershipEndDate: row.member?.membership_end_date ?? null,
-      })),
-      error: null,
+      data: null,
+      error: "Unable to reach the server. Please check your connection and try again.",
     };
+  }
+}
+
+export async function getRecentAttendance(limit: number): Promise<ServiceResult<AttendanceRecord[]>> {
+  try {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from("attendance")
+      .select(ATTENDANCE_SELECT)
+      .order("check_in_time", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      return { data: null, error: error.message };
+    }
+
+    return { data: (data as unknown as AttendanceRow[]).map(mapAttendanceRow), error: null };
   } catch {
     return {
       data: null,
