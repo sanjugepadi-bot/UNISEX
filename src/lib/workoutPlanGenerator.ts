@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getAiProvider, AiProviderError } from "@/lib/ai";
+import { generateStructured } from "@/lib/ai/generateStructured";
 import {
   buildWorkoutPrompt,
   type WorkoutPlanGeneratorInput,
@@ -55,30 +55,10 @@ const workoutPlanContentSchema = z.object({
 export async function generateWorkoutPlanContent(
   input: WorkoutPlanGeneratorInput,
 ): Promise<WorkoutPlanContent> {
-  const provider = getAiProvider();
   const { systemPrompt, userPrompt } = buildWorkoutPrompt(input);
-
-  const { text } = await provider.complete({
+  return generateStructured({
     systemPrompt,
     userPrompt,
-    expectJson: true,
+    schema: workoutPlanContentSchema,
   });
-
-  let parsedJson: unknown;
-  try {
-    parsedJson = JSON.parse(text);
-  } catch (err) {
-    throw new AiProviderError("The AI provider returned a response that was not valid JSON.", {
-      cause: err,
-    });
-  }
-
-  const validated = workoutPlanContentSchema.safeParse(parsedJson);
-  if (!validated.success) {
-    throw new AiProviderError(
-      `The AI provider's response did not match the expected workout plan structure: ${validated.error.message}`,
-    );
-  }
-
-  return validated.data;
 }

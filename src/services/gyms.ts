@@ -54,6 +54,9 @@ export async function createGymForOwner({
 export interface Gym {
   id: string;
   gymName: string;
+  gymPhone: string | null;
+  gymEmail: string | null;
+  address: string | null;
 }
 
 export async function getCurrentGym(gymId: string): Promise<ServiceResult<Gym>> {
@@ -62,7 +65,7 @@ export async function getCurrentGym(gymId: string): Promise<ServiceResult<Gym>> 
 
     const { data, error } = await supabase
       .from("gyms")
-      .select("id, gym_name")
+      .select("id, gym_name, gym_phone, gym_email, address")
       .eq("id", gymId)
       .single();
 
@@ -71,9 +74,50 @@ export async function getCurrentGym(gymId: string): Promise<ServiceResult<Gym>> 
     }
 
     return {
-      data: { id: data.id, gymName: data.gym_name },
+      data: {
+        id: data.id,
+        gymName: data.gym_name,
+        gymPhone: data.gym_phone,
+        gymEmail: data.gym_email,
+        address: data.address,
+      },
       error: null,
     };
+  } catch {
+    return {
+      data: null,
+      error: "Unable to reach the server. Please check your connection and try again.",
+    };
+  }
+}
+
+interface UpdateGymParams {
+  gymId: string;
+  gymName: string;
+  gymPhone?: string;
+  gymEmail?: string;
+  address?: string;
+}
+
+export async function updateGym(params: UpdateGymParams): Promise<ServiceResult<null>> {
+  try {
+    const supabase = await createClient();
+
+    const { error } = await supabase
+      .from("gyms")
+      .update({
+        gym_name: params.gymName,
+        gym_phone: params.gymPhone ?? null,
+        gym_email: params.gymEmail ?? null,
+        address: params.address ?? null,
+      })
+      .eq("id", params.gymId);
+
+    if (error) {
+      return { data: null, error: error.message };
+    }
+
+    return { data: null, error: null };
   } catch {
     return {
       data: null,
