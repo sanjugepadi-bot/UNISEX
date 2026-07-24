@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUserProfile } from "@/services/profiles";
 import { getDietPlanById, createDietPlan } from "@/services/dietPlans";
+import { checkAiRateLimit } from "@/lib/aiRateLimit";
 
 export async function regenerateDietPlanAction(formData: FormData): Promise<void> {
   const planId = formData.get("planId");
@@ -14,6 +15,12 @@ export async function regenerateDietPlanAction(formData: FormData): Promise<void
 
   const { data: profile } = await getCurrentUserProfile();
   if (!profile?.gymId) {
+    return;
+  }
+
+  const rateLimitResult = await checkAiRateLimit(profile.gymId);
+  if (!rateLimitResult.allowed) {
+    console.error("[regenerateDietPlanAction] rate limit exceeded for gym", profile.gymId);
     return;
   }
 

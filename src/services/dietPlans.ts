@@ -4,6 +4,7 @@ import {
   type DietPlanGeneratorInput,
   type DietPlanContent,
 } from "@/lib/dietPlanGenerator";
+import { logAiGeneration } from "@/services/aiUsage";
 
 export interface ServiceResult<T> {
   data: T | null;
@@ -146,7 +147,26 @@ export async function createDietPlan(
       supplements: params.supplements ?? null,
     };
 
-    const planContent = await generateDietPlanContent(generatorInput);
+    let planContent: DietPlanContent;
+    try {
+      planContent = await generateDietPlanContent(generatorInput);
+    } catch (err) {
+      await logAiGeneration({
+        gymId: params.gymId,
+        createdBy: params.createdBy,
+        feature: "diet_plan",
+        status: "failure",
+        errorMessage: err instanceof Error ? err.message : "Unknown error",
+      });
+      throw err;
+    }
+
+    await logAiGeneration({
+      gymId: params.gymId,
+      createdBy: params.createdBy,
+      feature: "diet_plan",
+      status: "success",
+    });
 
     const { data, error } = await supabase
       .from("diet_plans")

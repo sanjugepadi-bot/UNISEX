@@ -5,6 +5,7 @@ import { dietPlanSchema, type DietPlanInput } from "@/validators/dietPlan";
 import { getCurrentUserProfile } from "@/services/profiles";
 import { getMemberById } from "@/services/members";
 import { createDietPlan } from "@/services/dietPlans";
+import { checkAiRateLimit } from "@/lib/aiRateLimit";
 import type { DietPlanFormState } from "@/features/diet-planner/components/DietPlanForm";
 
 function calculateAge(dateOfBirth: string | null): number | null {
@@ -58,6 +59,11 @@ export async function generateDietPlanAction(
       fieldErrors: {},
       formError: "You must belong to a gym to generate diet plans.",
     };
+  }
+
+  const rateLimitResult = await checkAiRateLimit(profile.gymId);
+  if (!rateLimitResult.allowed) {
+    return { success: false, fieldErrors: {}, formError: rateLimitResult.error };
   }
 
   const { data: member, error: memberError } = await getMemberById(

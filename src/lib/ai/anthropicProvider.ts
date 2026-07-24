@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { AiProvider, AiCompletionRequest, AiCompletionResult } from "./types";
+import type { AiProvider, AiCompletionRequest, AiCompletionResult, AiProviderInfo } from "./types";
 import { AiProviderError, AiTimeoutError, AiEmptyResponseError } from "./types";
 import { withRetry } from "./retry";
 
@@ -77,5 +77,12 @@ export const anthropicProvider: AiProvider = {
     }
 
     return { text };
+  },
+
+  getProviderInfo(): AiProviderInfo {
+    return {
+      provider: "anthropic",
+      model: process.env.ANTHROPIC_MODEL || DEFAULT_MODEL,
+    };
   },
 };

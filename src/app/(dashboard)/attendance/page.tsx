@@ -32,10 +32,10 @@ export default async function AttendancePage({ searchParams }: AttendancePagePro
   const { data: attendance, error: attendanceError } = await getAttendanceForDate(selectedDate);
   const checkedInMemberIds = new Set((attendance ?? []).map((row) => row.memberId));
 
-  let searchResults: Member[] | null = [];
+  let searchResults: Member[] = [];
   if (q) {
     const result = await getMembers({ gymId: profile.gymId, search: q });
-    searchResults = result.data;
+    searchResults = result.data?.members ?? [];
   }
 
   return (
@@ -76,12 +76,12 @@ export default async function AttendancePage({ searchParams }: AttendancePagePro
 
       {q && (
         <div className="mb-6 overflow-hidden rounded-lg border border-gray-200">
-          {(!searchResults || searchResults.length === 0) && (
+          {searchResults.length === 0 && (
             <div className="px-3 py-4 text-sm text-gray-500">
               No members match &quot;{q}&quot;.
             </div>
           )}
-          {searchResults?.map((member) => (
+          {searchResults.map((member) => (
             <div
               key={member.id}
               className="flex items-center justify-between border-t border-gray-200 px-3 py-2 text-sm first:border-t-0"

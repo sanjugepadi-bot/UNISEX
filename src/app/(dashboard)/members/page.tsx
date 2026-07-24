@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCurrentUserProfile } from "@/services/profiles";
 import { getMembers } from "@/services/members";
-import { getMemberStatus } from "@/lib/memberStatus";
+import { getMemberStatus, type MemberStatus } from "@/lib/memberStatus";
 import { StatusBadge } from "@/features/members/components/StatusBadge";
 import { DeleteMemberButton } from "./DeleteMemberButton";
 
@@ -11,28 +11,53 @@ export const metadata: Metadata = {
   title: "Members",
 };
 
+const PAGE_SIZE = 20;
+const VALID_STATUSES: MemberStatus[] = ["active", "expiring", "expired", "unknown"];
+
 interface MembersPageProps {
-  searchParams: Promise<{ q?: string; status?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; page?: string }>;
+}
+
+function buildHref(params: { q?: string; status?: string; page: number }): string {
+  const usp = new URLSearchParams();
+  if (params.q) usp.set("q", params.q);
+  if (params.status) usp.set("status", params.status);
+  if (params.page > 1) usp.set("page", String(params.page));
+  const qs = usp.toString();
+  return qs ? `/members?${qs}` : "/members";
 }
 
 export default async function MembersPage({ searchParams }: MembersPageProps) {
-  const { q, status } = await searchParams;
+  const { q, status: statusParam, page: pageParam } = await searchParams;
+  const status =
+    statusParam && VALID_STATUSES.includes(statusParam as MemberStatus)
+      ? (statusParam as MemberStatus)
+      : undefined;
+  const page = Math.max(1, Number(pageParam) || 1);
 
   const { data: profile } = await getCurrentUserProfile();
   if (!profile?.gymId) {
     redirect("/onboarding");
   }
 
-  const { data: members, error } = await getMembers({ gymId: profile.gymId, search: q });
-  const filtered = (members ?? []).filter(
-    (member) => !status || getMemberStatus(member.membershipEndDate) === status,
-  );
+  const { data, error } = await getMembers({
+    gymId: profile.gymId,
+    search: q,
+    status,
+    page,
+    pageSize: PAGE_SIZE,
+  });
+  const members = data?.members ?? [];
+  const totalCount = data?.totalCount ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const rangeStart = totalCount === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = rangeStart === 0 ? 0 : rangeStart + members.length - 1;
 
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-lg font-medium text-gray-900">
-          Members <span className="text-sm font-normal text-gray-500">{members?.length ?? 0} total</span>
+          Members <span className="text-sm font-normal text-gray-500">{totalCount} total</span>
         </h1>
         <Link
           href="/members/new"
@@ -88,14 +113,14 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 && (
+            {members.length === 0 && (
               <tr>
                 <td colSpan={7} className="px-3 py-8 text-center text-gray-500">
                   No members found.
                 </td>
               </tr>
             )}
-            {filtered.map((member) => (
+            {members.map((member) => (
               <tr key={member.id} className="border-t border-gray-200">
                 <td className="px-3 py-2">{member.fullName}</td>
                 <td className="px-3 py-2 text-gray-600">{member.phone}</td>
@@ -121,6 +146,43 @@ export default async function MembersPage({ searchParams }: MembersPageProps) {
           </tbody>
         </table>
       </div>
+
+      {totalCount > 0 && (
+        <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+          <span>
+            Showing {rangeStart}–{rangeEnd} of {totalCount}
+          </span>
+          <div className="flex items-center gap-3">
+            {page > 1 ? (
+              <Link
+                href={buildHref({ q, status, page: page - 1 })}
+                className="rounded-md border border-gray-300 px-3 py-1.5 hover:bg-gray-50"
+              >
+                Previous
+              </Link>
+            ) : (
+              <span className="cursor-not-allowed rounded-md border border-gray-200 px-3 py-1.5 text-gray-300">
+                Previous
+              </span>
+            )}
+            <span>
+              Page {page} of {totalPages}
+            </span>
+            {page < totalPages ? (
+              <Link
+                href={buildHref({ q, status, page: page + 1 })}
+                className="rounded-md border border-gray-300 px-3 py-1.5 hover:bg-gray-50"
+              >
+                Next
+              </Link>
+            ) : (
+              <span className="cursor-not-allowed rounded-md border border-gray-200 px-3 py-1.5 text-gray-300">
+                Next
+              </span>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

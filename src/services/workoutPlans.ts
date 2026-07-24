@@ -4,6 +4,7 @@ import {
   type WorkoutPlanGeneratorInput,
   type WorkoutPlanContent,
 } from "@/lib/workoutPlanGenerator";
+import { logAiGeneration } from "@/services/aiUsage";
 
 export interface ServiceResult<T> {
   data: T | null;
@@ -123,7 +124,26 @@ export async function createWorkoutPlan(
       medicalConditions: params.medicalConditions ?? null,
     };
 
-    const planContent = await generateWorkoutPlanContent(generatorInput);
+    let planContent: WorkoutPlanContent;
+    try {
+      planContent = await generateWorkoutPlanContent(generatorInput);
+    } catch (err) {
+      await logAiGeneration({
+        gymId: params.gymId,
+        createdBy: params.createdBy,
+        feature: "workout_plan",
+        status: "failure",
+        errorMessage: err instanceof Error ? err.message : "Unknown error",
+      });
+      throw err;
+    }
+
+    await logAiGeneration({
+      gymId: params.gymId,
+      createdBy: params.createdBy,
+      feature: "workout_plan",
+      status: "success",
+    });
 
     const { data, error } = await supabase
       .from("workout_plans")

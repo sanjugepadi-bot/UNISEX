@@ -20,11 +20,11 @@ export default async function WorkoutPlansPage({ searchParams }: WorkoutPlansPag
     redirect("/onboarding");
   }
 
-  let members: Member[] | null = [];
+  let members: Member[] = [];
   let error: string | null = null;
   if (q) {
     const result = await getMembers({ gymId: profile.gymId, search: q });
-    members = result.data;
+    members = result.data?.members ?? [];
     error = result.error;
   }
 
@@ -56,12 +56,12 @@ export default async function WorkoutPlansPage({ searchParams }: WorkoutPlansPag
 
       {q && (
         <div className="overflow-hidden rounded-lg border border-gray-200">
-          {(!members || members.length === 0) && (
+          {members.length === 0 && (
             <div className="px-3 py-4 text-sm text-gray-500">
               No members match &quot;{q}&quot;.
             </div>
           )}
-          {members?.map((member) => (
+          {members.map((member) => (
             <Link
               key={member.id}
               href={`/workout-plans/${member.id}`}

@@ -65,6 +65,12 @@ export function LoginForm() {
           required
         />
 
+        <div className="flex justify-end">
+          <Link href="/forgot-password" className="text-xs text-gray-600 underline">
+            Forgot password?
+          </Link>
+        </div>
+
         <Button type="submit" fullWidth loading={isPending}>
           Log in
         </Button>

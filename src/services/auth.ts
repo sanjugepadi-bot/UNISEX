@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 
 export interface ServiceResult<T> {
@@ -121,6 +122,53 @@ export async function signOut(): Promise<ServiceResult<null>> {
   try {
     const supabase = await createClient();
     const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      return { data: null, error: error.message };
+    }
+
+    return { data: null, error: null };
+  } catch {
+    return {
+      data: null,
+      error: "Unable to reach the server. Please check your connection and try again.",
+    };
+  }
+}
+
+async function getSiteUrl(): Promise<string> {
+  const headersList = await headers();
+  const host = headersList.get("host") ?? "localhost:3000";
+  const protocol = host.includes("localhost") ? "http" : "https";
+  return `${protocol}://${host}`;
+}
+
+export async function requestPasswordReset(email: string): Promise<ServiceResult<null>> {
+  try {
+    const supabase = await createClient();
+    const siteUrl = await getSiteUrl();
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${siteUrl}/auth/callback?next=/reset-password`,
+    });
+
+    if (error) {
+      return { data: null, error: error.message };
+    }
+
+    return { data: null, error: null };
+  } catch {
+    return {
+      data: null,
+      error: "Unable to reach the server. Please check your connection and try again.",
+    };
+  }
+}
+
+export async function updatePassword(newPassword: string): Promise<ServiceResult<null>> {
+  try {
+    const supabase = await createClient();
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
 
     if (error) {
       return { data: null, error: error.message };

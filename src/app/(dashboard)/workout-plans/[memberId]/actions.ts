@@ -5,6 +5,7 @@ import { workoutPlanSchema, type WorkoutPlanInput } from "@/validators/workoutPl
 import { getCurrentUserProfile } from "@/services/profiles";
 import { getMemberById } from "@/services/members";
 import { createWorkoutPlan } from "@/services/workoutPlans";
+import { checkAiRateLimit } from "@/lib/aiRateLimit";
 import type { WorkoutPlanFormState } from "@/features/workout-planner/components/WorkoutPlanForm";
 
 function calculateAge(dateOfBirth: string | null): number | null {
@@ -53,6 +54,11 @@ export async function generateWorkoutPlanAction(
       fieldErrors: {},
       formError: "You must belong to a gym to generate workout plans.",
     };
+  }
+
+  const rateLimitResult = await checkAiRateLimit(profile.gymId);
+  if (!rateLimitResult.allowed) {
+    return { success: false, fieldErrors: {}, formError: rateLimitResult.error };
   }
 
   const { data: member, error: memberError } = await getMemberById(

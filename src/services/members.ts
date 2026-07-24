@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import type { MemberStatus } from "@/lib/memberStatus";
 
 export interface ServiceResult<T> {
   data: T | null;
@@ -69,18 +70,29 @@ function sanitizeSearchTerm(search: string): string {
 interface GetMembersParams {
   gymId: string;
   search?: string;
+  status?: MemberStatus;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface GetMembersResult {
+  members: Member[];
+  totalCount: number;
 }
 
 export async function getMembers({
   gymId,
   search,
-}: GetMembersParams): Promise<ServiceResult<Member[]>> {
+  status,
+  page = 1,
+  pageSize = 20,
+}: GetMembersParams): Promise<ServiceResult<GetMembersResult>> {
   try {
     const supabase = await createClient();
 
     let query = supabase
       .from("members")
-      .select(MEMBER_SELECT)
+      .select(MEMBER_SELECT, { count: "exact" })
       .eq("gym_id", gymId)
       .order("full_name", { ascending: true });
 
@@ -89,13 +101,46 @@ export async function getMembers({
       query = query.or(`full_name.ilike.%${cleanSearch}%,phone.ilike.%${cleanSearch}%`);
     }
 
-    const { data, error } = await query;
+    // Status categorization mirrors lib/memberStatus.ts's getMemberStatus()
+    // definition, translated into SQL so it composes correctly with
+    // .range() pagination below — filtering after fetching a single page
+    // would produce inconsistent page sizes and incorrect page counts.
+    if (status) {
+      const today = new Date().toISOString().slice(0, 10);
+      const expiringThreshold = new Date();
+      expiringThreshold.setUTCDate(expiringThreshold.getUTCDate() + 7);
+      const expiringThresholdIso = expiringThreshold.toISOString().slice(0, 10);
+
+      if (status === "unknown") {
+        query = query.is("membership_end_date", null);
+      } else if (status === "expired") {
+        query = query.lt("membership_end_date", today);
+      } else if (status === "expiring") {
+        query = query
+          .gte("membership_end_date", today)
+          .lte("membership_end_date", expiringThresholdIso);
+      } else if (status === "active") {
+        query = query.gt("membership_end_date", expiringThresholdIso);
+      }
+    }
+
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
+    query = query.range(from, to);
+
+    const { data, error, count } = await query;
 
     if (error) {
       return { data: null, error: error.message };
     }
 
-    return { data: (data as unknown as MemberRow[]).map(mapMemberRow), error: null };
+    return {
+      data: {
+        members: (data as unknown as MemberRow[]).map(mapMemberRow),
+        totalCount: count ?? 0,
+      },
+      error: null,
+    };
   } catch {
     return {
       data: null,

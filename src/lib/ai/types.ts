@@ -15,8 +15,14 @@ export interface AiCompletionResult {
   text: string;
 }
 
+export interface AiProviderInfo {
+  provider: string;
+  model: string;
+}
+
 export interface AiProvider {
   complete(request: AiCompletionRequest): Promise<AiCompletionResult>;
+  getProviderInfo(): AiProviderInfo;
 }
 
 export class AiProviderError extends Error {
