@@ -20,11 +20,13 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   const { data: gym } = await getCurrentGym(profile.gymId);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-background">
       <Sidebar gymName={gym?.gymName ?? "Your gym"} />
-      <div className="flex flex-1 flex-col">
-        <Topbar fullName={profile.fullName} logoutAction={logoutAction} />
-        <main className="flex-1 bg-gray-50 p-6">{children}</main>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <Topbar fullName={profile.fullName} role={profile.role} logoutAction={logoutAction} />
+        <main className="flex-1 p-6 lg:p-8">
+          <div className="mx-auto w-full max-w-[1400px]">{children}</div>
+        </main>
       </div>
     </div>
   );

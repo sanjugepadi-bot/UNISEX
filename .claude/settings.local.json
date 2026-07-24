@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(gh auth *)",
-      "Bash(gh --version)"
+      "Bash(gh --version)",
+      "PowerShell($env:PATH = \"C:\\\\Program Files\\\\nodejs;\" + $env:PATH; Set-Location \"C:\\\\Users\\\\ASUS\\\\Pictures\\\\UNISEX\"; npm run build; Write-Output \"BUILD_EXIT=$LASTEXITCODE\")"
     ]
   }
 }

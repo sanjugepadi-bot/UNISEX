@@ -15,7 +15,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     return (
       <div className="flex flex-col gap-1">
         {/* Label wraps the input so the whole text is clickable; htmlFor/id kept too for explicit assistive-tech association */}
-        <label htmlFor={inputId} className="flex items-start gap-2 text-xs text-gray-600">
+        <label htmlFor={inputId} className="flex items-start gap-2 text-xs text-muted-foreground">
           <input
             ref={ref}
             type="checkbox"
@@ -23,19 +23,19 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             name={name}
             aria-invalid={error ? true : undefined}
             aria-describedby={errorId ?? helperId}
-            className={`mt-0.5 h-4 w-4 rounded ${
-              error ? "border-red-500" : "border-gray-300"
+            className={`mt-0.5 h-4 w-4 rounded accent-primary transition-colors duration-150 focus:ring-2 focus:ring-primary/20 ${
+              error ? "border-danger" : "border-border"
             } ${className ?? ""}`}
             {...props}
           />
           <span>{label}</span>
         </label>
         {error ? (
-          <p id={errorId} className="text-xs text-red-600">
+          <p id={errorId} className="text-xs text-danger">
             {error}
           </p>
         ) : helperText ? (
-          <p id={helperId} className="text-xs text-gray-500">
+          <p id={helperId} className="text-xs text-muted-foreground">
             {helperText}
           </p>
         ) : null}

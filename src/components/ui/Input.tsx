@@ -14,7 +14,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
     return (
       <div className="flex flex-col gap-1">
-        <label htmlFor={inputId} className="text-xs text-gray-600">
+        <label htmlFor={inputId} className="text-xs font-medium text-muted-foreground">
           {label}
         </label>
         <input
@@ -23,17 +23,17 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           name={name}
           aria-invalid={error ? true : undefined}
           aria-describedby={errorId ?? helperId}
-          className={`w-full rounded-md border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10 ${
-            error ? "border-red-500" : "border-gray-300"
+          className={`w-full rounded-control border bg-surface px-3 py-2 text-sm text-foreground outline-none transition-colors duration-150 placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20 ${
+            error ? "border-danger" : "border-border"
           } ${className ?? ""}`}
           {...props}
         />
         {error ? (
-          <p id={errorId} className="text-xs text-red-600">
+          <p id={errorId} className="text-xs text-danger">
             {error}
           </p>
         ) : helperText ? (
-          <p id={helperId} className="text-xs text-gray-500">
+          <p id={helperId} className="text-xs text-muted-foreground">
             {helperText}
           </p>
         ) : null}
