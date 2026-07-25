@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { CircleCheck, CircleAlert } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import type { GymSettingsInput } from "@/validators/gymSettings";
@@ -35,49 +36,57 @@ export function GymProfileForm({ action, gym }: GymProfileFormProps) {
   }, [state.success, router]);
 
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form action={formAction} className="flex flex-col gap-5">
       {state.formError && (
-        <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-          {state.formError}
-        </p>
+        <div className="flex items-center gap-3 rounded-surface border border-border bg-danger-bg px-4 py-3">
+          <CircleAlert className="h-5 w-5 shrink-0 text-danger" aria-hidden="true" />
+          <p role="alert" className="text-sm text-danger">
+            {state.formError}
+          </p>
+        </div>
       )}
 
       {state.success && (
-        <p role="status" className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">
-          Gym profile updated.
-        </p>
+        <div className="flex items-center gap-3 rounded-surface border border-border bg-success-bg px-4 py-3">
+          <CircleCheck className="h-5 w-5 shrink-0 text-success" aria-hidden="true" />
+          <p role="status" className="text-sm text-success">
+            Gym profile updated.
+          </p>
+        </div>
       )}
 
-      <Input
-        label="Gym name"
-        name="gymName"
-        defaultValue={gym.gymName}
-        error={state.fieldErrors.gymName}
-        required
-      />
-      <Input
-        label="Gym phone"
-        name="gymPhone"
-        type="tel"
-        defaultValue={gym.gymPhone ?? undefined}
-        error={state.fieldErrors.gymPhone}
-      />
-      <Input
-        label="Gym email"
-        name="gymEmail"
-        type="email"
-        defaultValue={gym.gymEmail ?? undefined}
-        error={state.fieldErrors.gymEmail}
-      />
-      <Input
-        label="Address"
-        name="address"
-        defaultValue={gym.address ?? undefined}
-        error={state.fieldErrors.address}
-      />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <Input
+          label="Gym name"
+          name="gymName"
+          defaultValue={gym.gymName}
+          error={state.fieldErrors.gymName}
+          required
+        />
+        <Input
+          label="Gym phone"
+          name="gymPhone"
+          type="tel"
+          defaultValue={gym.gymPhone ?? undefined}
+          error={state.fieldErrors.gymPhone}
+        />
+        <Input
+          label="Gym email"
+          name="gymEmail"
+          type="email"
+          defaultValue={gym.gymEmail ?? undefined}
+          error={state.fieldErrors.gymEmail}
+        />
+        <Input
+          label="Address"
+          name="address"
+          defaultValue={gym.address ?? undefined}
+          error={state.fieldErrors.address}
+        />
+      </div>
 
-      <div className="mt-2 flex justify-end border-t border-gray-200 pt-4">
-        <Button type="submit" loading={isPending}>
+      <div className="flex justify-end border-t border-border pt-4">
+        <Button type="submit" variant="primary" loading={isPending}>
           Save changes
         </Button>
       </div>
