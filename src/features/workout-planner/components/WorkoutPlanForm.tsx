@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { CircleAlert } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Button } from "@/components/ui/Button";
@@ -31,6 +32,11 @@ interface WorkoutPlanFormProps {
   member: Member;
 }
 
+const selectClassName =
+  "w-full rounded-control border border-border bg-surface px-3 py-2 text-sm text-foreground outline-none transition-colors duration-150 focus:border-primary focus:ring-2 focus:ring-primary/20";
+const sectionLabelClassName = "text-caption font-semibold uppercase tracking-wide text-muted-foreground";
+const fieldLabelClassName = "text-xs font-medium text-muted-foreground";
+
 export function WorkoutPlanForm({ action, member }: WorkoutPlanFormProps) {
   const router = useRouter();
   const [state, formAction, isPending] = useActionState(action, emptyState);
@@ -42,86 +48,89 @@ export function WorkoutPlanForm({ action, member }: WorkoutPlanFormProps) {
   }, [state.success, router]);
 
   return (
-    <Card title="Generate workout plan" className="max-w-[600px]">
-      <div className="mb-4 rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-600">
+    <Card title="Generate workout plan" description="Create an AI-powered plan for this member.">
+      <div className="mb-5 rounded-control border border-border bg-background px-3 py-2.5 text-xs text-muted-foreground">
         Using {member.fullName}&apos;s profile: {member.gender ?? "gender not set"},{" "}
         {member.dateOfBirth ? "DOB on file" : "DOB not set"}, {member.height ?? "—"} cm,{" "}
         {member.weight ?? "—"} kg.
       </div>
 
-      <form action={formAction} className="flex flex-col gap-4">
+      <form action={formAction} className="flex flex-col gap-5">
         <input type="hidden" name="memberId" value={member.id} />
 
         {state.formError && (
-          <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-            {state.formError}
-          </p>
+          <div className="flex items-center gap-3 rounded-surface border border-border bg-danger-bg px-4 py-3">
+            <CircleAlert className="h-5 w-5 shrink-0 text-danger" aria-hidden="true" />
+            <p role="alert" className="text-sm text-danger">
+              {state.formError}
+            </p>
+          </div>
         )}
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="fitnessGoal" className="text-xs text-gray-600">
-            Fitness goal
-          </label>
-          <select
-            id="fitnessGoal"
-            name="fitnessGoal"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10"
-          >
-            {FITNESS_GOALS.map((goal) => (
-              <option key={goal} value={goal}>
-                {goal}
-              </option>
-            ))}
-          </select>
-          {state.fieldErrors.fitnessGoal && (
-            <p className="text-xs text-red-600">{state.fieldErrors.fitnessGoal}</p>
-          )}
+        <div className="flex flex-col gap-3">
+          <p className={sectionLabelClassName}>Goal &amp; experience</p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-1">
+              <label htmlFor="fitnessGoal" className={fieldLabelClassName}>
+                Fitness goal
+              </label>
+              <select id="fitnessGoal" name="fitnessGoal" className={selectClassName}>
+                {FITNESS_GOALS.map((goal) => (
+                  <option key={goal} value={goal}>
+                    {goal}
+                  </option>
+                ))}
+              </select>
+              {state.fieldErrors.fitnessGoal && (
+                <p className="text-xs text-danger">{state.fieldErrors.fitnessGoal}</p>
+              )}
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label htmlFor="experienceLevel" className={fieldLabelClassName}>
+                Experience level
+              </label>
+              <select id="experienceLevel" name="experienceLevel" className={selectClassName}>
+                {EXPERIENCE_LEVELS.map((level) => (
+                  <option key={level} value={level}>
+                    {level}
+                  </option>
+                ))}
+              </select>
+              {state.fieldErrors.experienceLevel && (
+                <p className="text-xs text-danger">{state.fieldErrors.experienceLevel}</p>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label htmlFor="experienceLevel" className="text-xs text-gray-600">
-            Experience level
-          </label>
-          <select
-            id="experienceLevel"
-            name="experienceLevel"
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10"
-          >
-            {EXPERIENCE_LEVELS.map((level) => (
-              <option key={level} value={level}>
-                {level}
-              </option>
-            ))}
-          </select>
-          {state.fieldErrors.experienceLevel && (
-            <p className="text-xs text-red-600">{state.fieldErrors.experienceLevel}</p>
-          )}
+        <div className="flex flex-col gap-3">
+          <p className={sectionLabelClassName}>Schedule</p>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input
+              label="Workout days per week"
+              name="workoutDaysPerWeek"
+              type="number"
+              min={1}
+              max={7}
+              defaultValue={3}
+              error={state.fieldErrors.workoutDaysPerWeek}
+              required
+            />
+            <Input
+              label="Session duration (minutes)"
+              name="workoutDurationMinutes"
+              type="number"
+              defaultValue={45}
+              error={state.fieldErrors.workoutDurationMinutes}
+              required
+            />
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Workout days per week"
-            name="workoutDaysPerWeek"
-            type="number"
-            min={1}
-            max={7}
-            defaultValue={3}
-            error={state.fieldErrors.workoutDaysPerWeek}
-            required
-          />
-          <Input
-            label="Session duration (minutes)"
-            name="workoutDurationMinutes"
-            type="number"
-            defaultValue={45}
-            error={state.fieldErrors.workoutDurationMinutes}
-            required
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <p className="text-xs text-gray-600">Available equipment</p>
-          <div className="grid grid-cols-2 gap-2">
+        <div className="flex flex-col gap-3">
+          <p className={sectionLabelClassName}>Available equipment</p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {EQUIPMENT_OPTIONS.map((option) => (
               <Checkbox
                 key={option}
@@ -134,14 +143,17 @@ export function WorkoutPlanForm({ action, member }: WorkoutPlanFormProps) {
           </div>
         </div>
 
-        <Input
-          label="Medical conditions (optional)"
-          name="medicalConditions"
-          error={state.fieldErrors.medicalConditions}
-        />
+        <div className="flex flex-col gap-3">
+          <p className={sectionLabelClassName}>Additional notes</p>
+          <Input
+            label="Medical conditions (optional)"
+            name="medicalConditions"
+            error={state.fieldErrors.medicalConditions}
+          />
+        </div>
 
-        <div className="mt-2 flex justify-end gap-2 border-t border-gray-200 pt-4">
-          <Button type="submit" loading={isPending}>
+        <div className="flex justify-end border-t border-border pt-4">
+          <Button type="submit" variant="primary" loading={isPending}>
             Generate plan
           </Button>
         </div>
