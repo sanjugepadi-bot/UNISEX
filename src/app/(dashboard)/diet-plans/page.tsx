@@ -1,12 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Utensils, Search, SearchX } from "lucide-react";
 import { getCurrentUserProfile } from "@/services/profiles";
 import { getMembers, type Member } from "@/services/members";
 
 export const metadata: Metadata = {
   title: "Diet Plans",
 };
+
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((part) => part[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
 
 interface DietPlansPageProps {
   searchParams: Promise<{ q?: string }>;
@@ -29,50 +39,77 @@ export default async function DietPlansPage({ searchParams }: DietPlansPageProps
   }
 
   return (
-    <div>
-      <h1 className="mb-4 text-lg font-medium text-gray-900">Diet Plans</h1>
-
-      <form method="get" className="mb-4 flex gap-2">
-        <input
-          type="text"
-          name="q"
-          defaultValue={q ?? ""}
-          placeholder="Search a member to generate or view their diet plans"
-          className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-black/10"
-        />
-        <button
-          type="submit"
-          className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
-          Search
-        </button>
-      </form>
-
-      {error && (
-        <p role="alert" className="mb-4 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-          {error}
-        </p>
-      )}
-
-      {q && (
-        <div className="overflow-hidden rounded-lg border border-gray-200">
-          {members.length === 0 && (
-            <div className="px-3 py-4 text-sm text-gray-500">
-              No members match &quot;{q}&quot;.
-            </div>
-          )}
-          {members.map((member) => (
-            <Link
-              key={member.id}
-              href={`/diet-plans/${member.id}`}
-              className="flex items-center justify-between border-t border-gray-200 px-3 py-2 text-sm first:border-t-0 hover:bg-gray-50"
-            >
-              <span className="font-medium text-gray-900">{member.fullName}</span>
-              <span className="text-gray-500">{member.phone}</span>
-            </Link>
-          ))}
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control bg-primary/10 text-primary">
+          <Utensils className="h-5 w-5" aria-hidden="true" />
         </div>
-      )}
+        <div>
+          <h1 className="text-h2 font-semibold text-foreground">Diet Plans</h1>
+          <p className="text-sm text-muted-foreground">
+            Search for a member to generate or view their AI-powered diet plans.
+          </p>
+        </div>
+      </div>
+
+      <div className="rounded-surface border border-border bg-surface p-4 shadow-card">
+        <form method="get" className="flex gap-3">
+          <div className="relative flex-1">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
+            <input
+              type="text"
+              name="q"
+              defaultValue={q ?? ""}
+              placeholder="Search a member by name or phone"
+              className="w-full rounded-control border border-border bg-background py-2 pl-9 pr-3 text-sm text-foreground outline-none transition-colors duration-150 placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+          <button
+            type="submit"
+            className="rounded-control border border-border bg-surface px-4 py-2 text-sm font-medium text-foreground transition-colors duration-150 hover:bg-secondary"
+          >
+            Search
+          </button>
+        </form>
+
+        {error && (
+          <p role="alert" className="mt-3 rounded-control bg-danger-bg px-3 py-2 text-sm text-danger">
+            {error}
+          </p>
+        )}
+
+        {q && (
+          <div className="mt-4 overflow-hidden rounded-control border border-border">
+            {members.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
+                <SearchX className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+                <p className="text-sm text-muted-foreground">No members match &quot;{q}&quot;.</p>
+              </div>
+            ) : (
+              members.map((member) => (
+                <Link
+                  key={member.id}
+                  href={`/diet-plans/${member.id}`}
+                  className="flex items-center gap-3 border-t border-border px-3 py-2.5 transition-colors duration-150 first:border-t-0 hover:bg-secondary/40"
+                >
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
+                    {getInitials(member.fullName)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {member.fullName}
+                    </p>
+                    <p className="text-caption text-muted-foreground">{member.phone}</p>
+                  </div>
+                </Link>
+              ))
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
