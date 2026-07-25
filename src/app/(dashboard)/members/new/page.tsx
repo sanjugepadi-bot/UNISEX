@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentUserProfile } from "@/services/profiles";
 import { getActivePlans } from "@/services/membershipPlans";
-import { MemberForm } from "@/features/members/components/MemberForm";
+import { AddMemberForm } from "./AddMemberForm";
 import { createMemberAction } from "./actions";
 
 export const metadata: Metadata = {
@@ -17,5 +17,5 @@ export default async function NewMemberPage() {
 
   const { data: plans } = await getActivePlans(profile.gymId);
 
-  return <MemberForm action={createMemberAction} plans={plans ?? []} />;
+  return <AddMemberForm action={createMemberAction} plans={plans ?? []} />;
 }
