@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dupa-swimming-pool",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\ASUS\\Pictures\\dupa-swimming-pool"],
+      "port": 3100
+    }
+  ]
+}
