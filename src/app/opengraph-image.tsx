@@ -28,7 +28,7 @@ export default function OpengraphImage() {
             {BUSINESS_INFO.shortName.secondary}
           </div>
         </div>
-        <div style={{ fontSize: 26, color: "#a1a1aa", marginTop: 20 }}>
+        <div style={{ display: "flex", fontSize: 26, color: "#a1a1aa", marginTop: 20 }}>
           Premium Strength &amp; Fitness Studio · {BUSINESS_INFO.locality}, {BUSINESS_INFO.region}
         </div>
       </div>
