@@ -2,10 +2,23 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "unisex",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000,
+      "autoPort": true
+    },
+    {
       "name": "dupa-swimming-pool",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\ASUS\\Pictures\\dupa-swimming-pool"],
+      "runtimeArgs": ["run", "dev", "--prefix", "C:\\DProjects\\DUPA-Swimming-Pool"],
       "port": 3100
+    },
+    {
+      "name": "sankar-portfolio",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "C:\\Users\\ASUS\\Sankar padi portfulio"],
+      "port": 3101
     }
   ]
 }
