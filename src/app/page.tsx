@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
-import { getCurrentUserProfile } from "@/services/profiles";
 import { MarketingPage } from "@/features/marketing/MarketingPage";
 import { BUSINESS_INFO } from "@/features/marketing/data";
 
@@ -26,12 +24,6 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function Home() {
-  const { data: profile } = await getCurrentUserProfile();
-
-  if (profile) {
-    redirect(profile.gymId ? "/dashboard" : "/onboarding");
-  }
-
+export default function Home() {
   return <MarketingPage />;
 }
